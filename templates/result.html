@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Prediction Result</title>
+</head>
+<body>
+    <h1>Prediction Result</h1>
+    <p><strong>Predicted Sentiment:</strong> {{ result.sentiment }}</p>
+    {% if result.confidence %}
+    <p><strong>Model Confidence:</strong> {{ result.confidence | round(2) }}</p>
+    {% endif %}
+    <p><strong>TextBlob Sentiment Score:</strong> {{ result.tb_score | round(2) }}</p>
+    <hr>
+    <a href="/">Try another prediction</a>
+</body>
+</html>

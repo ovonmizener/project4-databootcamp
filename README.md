@@ -1,5 +1,5 @@
-🎶 Music Sentiment Analyzer 🎶  
-
+**🎶 Music Sentiment Analyzer 🎶  
+**
 Group Members 
 
 

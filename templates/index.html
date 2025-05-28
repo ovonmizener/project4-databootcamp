@@ -5,11 +5,13 @@
     <title>Placeholder - Song Sentiment Predictor</title>
 </head>
 <body>
-    <h1>Song Sentiment Predictor</h1>
+    <h1>Placeholder - Song Sentiment Predictor</h1>
     {% if error %}
       <p style="color: red;">{{ error }}</p>
     {% endif %}
     <form action="/predict" method="post">
+        <label for="artist">Artist Name:</label><br>
+        <input type="text" name="artist" id="artist" placeholder="Enter the artist name..." /><br><br>
         <label for="lyrics">Enter New Song Lyrics:</label><br>
         <textarea name="lyrics" id="lyrics" rows="10" cols="50" placeholder="Paste song lyrics here..."></textarea><br>
         <input type="submit" value="Predict Sentiment">

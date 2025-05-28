@@ -3,6 +3,8 @@ import os
 import re
 import pickle
 from textblob import TextBlob
+import sqlite3
+import datetime
 
 # Initialize the Flask app.
 app = Flask(__name__)
@@ -11,12 +13,10 @@ app = Flask(__name__)
 # Pickle Explanation:
 # ---------------------------
 # The pickle module is used to serialize and deserialize Python objects.
-# Here, we're using it to load our pre-trained TF-IDF vectorizer and sentiment model
+# Here, we're loading our pre-trained TF-IDF vectorizer and sentiment model
 # from disk so we don't have to rebuild or retrain the model each time the app starts.
 # ---------------------------
 
-# Load the TF-IDF vectorizer and sentiment model from the 'resources' folder.
-# The 'resources' folder should contain 'tfidf.pkl' and 'sentiment_model.pkl'.
 def load_pickled_model():
     """
     Load the TF-IDF vectorizer and sentiment model from the 'resources' folder.
@@ -46,7 +46,7 @@ def clean_text(text):
     Simple text cleaning function:
       - Converts text to lowercase.
       - Removes punctuation.
-      - Splits the text into tokens and then rejoins them.
+      - Splits the text into tokens and rejoins them.
     """
     text = text.lower()
     text = re.sub(r"[^\w\s]", "", text)
@@ -74,6 +74,53 @@ def predict_sentiment(lyrics):
     tb_score = TextBlob(cleaned).sentiment.polarity
     return prediction, proba, tb_score
 
+# SQLite Database Initialization and Logging
+# The database file is 'submissions_log.db' stored in the 'resources' folder.
+def init_db():
+    """
+    Initializes the submissions database by creating the table if it does not exist.
+    """
+    db_path = os.path.join("resources", "submissions_log.db")
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS submissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT,
+            artist TEXT,
+            lyrics TEXT,
+            sentiment TEXT,
+            confidence REAL,
+            tb_score REAL
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def log_submission_db(artist, lyrics, sentiment, confidence, tb_score):
+    """
+    Logs the submission data into the SQLite database.
+    Parameters:
+        artist: The submitted artist name.
+        lyrics: The input lyrics submitted by the user.
+        sentiment: The predicted sentiment ("Positive/Neutral" or "Negative").
+        confidence: The probability or confidence of the prediction.
+        tb_score: The TextBlob sentiment polarity score.
+    """
+    db_path = os.path.join("resources", "submissions_log.db")
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    timestamp = datetime.datetime.now().isoformat()
+    c.execute("""
+        INSERT INTO submissions (timestamp, artist, lyrics, sentiment, confidence, tb_score)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (timestamp, artist, lyrics, sentiment, confidence, tb_score))
+    conn.commit()
+    conn.close()
+
+# Initialize the database (create table if it doesn't exist)
+init_db()
+
 @app.route("/")
 def index():
     # Render the home page.
@@ -81,7 +128,8 @@ def index():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    # Get the lyrics entered by the user from the form.
+    # Get the artist and lyrics entered by the user from the form.
+    artist = request.form.get("artist")
     lyrics = request.form.get("lyrics")
     if not lyrics or lyrics.strip() == "":
         error_msg = "Please enter some lyrics to get a prediction."
@@ -89,9 +137,14 @@ def predict():
     
     # Use our prediction function.
     prediction, proba, tb_score = predict_sentiment(lyrics)
-    sentiment = "Positive/Neutral" if prediction == 1 else "Negative"
+    sentiment_label = "Positive/Neutral" if prediction == 1 else "Negative"
+    
+    # Log the submission and prediction results into SQLite, including the artist.
+    log_submission_db(artist, lyrics, sentiment_label, proba, tb_score)
+    
     result = {
-        "sentiment": sentiment,
+        "artist": artist,
+        "sentiment": sentiment_label,
         "confidence": proba,
         "tb_score": tb_score,
         "lyrics": lyrics

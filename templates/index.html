@@ -1,20 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Placeholder - Song Sentiment Predictor</title>
+    <title>Music Sentiment and Genre Predictor</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 2em; }
+      input, textarea { width: 100%; padding: 0.5em; margin: 0.5em 0; }
+      label { font-weight: bold; }
+    </style>
 </head>
 <body>
-    <h1>Placeholder - Song Sentiment Predictor</h1>
+    <h1>Music Sentiment and Genre Predictor</h1>
     {% if error %}
-      <p style="color: red;">{{ error }}</p>
+      <p style="color:red;">{{ error }}</p>
     {% endif %}
-    <form action="/predict" method="post">
-        <label for="artist">Artist Name:</label><br>
-        <input type="text" name="artist" id="artist" placeholder="Enter the artist name..." /><br><br>
-        <label for="lyrics">Enter New Song Lyrics:</label><br>
-        <textarea name="lyrics" id="lyrics" rows="10" cols="50" placeholder="Paste song lyrics here..."></textarea><br>
-        <input type="submit" value="Predict Sentiment">
+    <form action="/predict" method="POST">
+        <label for="artist">Artist Name:</label>
+        <input type="text" id="artist" name="artist" placeholder="Enter artist name">
+        
+        <label for="lyrics">Enter Lyrics:</label>
+        <textarea id="lyrics" name="lyrics" rows="10" placeholder="Enter song lyrics here..."></textarea>
+        
+        <input type="submit" value="Predict">
     </form>
 </body>
 </html>

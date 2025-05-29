@@ -6,7 +6,7 @@ from textblob import TextBlob
 import sqlite3
 import datetime
 
-# Initialize the Flask app.
+# Initialize the Flask app. Test
 app = Flask(__name__)
 
 # ---------------------------

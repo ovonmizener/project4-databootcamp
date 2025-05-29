@@ -37,7 +37,7 @@ if None in [tfidf_sentiment, sentiment_model, tfidf_genre, genre_model]:
 
 def clean_text(text):
     """
-    Clean incoming text: lowercase, remove punctuation, and tokenize.
+    Clean incoming text: convert to lowercase, remove punctuation, and tokenize.
     """
     text = text.lower()
     text = re.sub(r"[^\w\s]", "", text)
@@ -45,12 +45,12 @@ def clean_text(text):
 
 def predict_values(lyrics):
     """
-    Predict sentiment and genre for the input lyrics.
+    Predicts sentiment and genre for the input lyrics.
     Returns:
         sentiment_prediction: Binary prediction (1 = Positive/Neutral, 0 = Negative).
         sentiment_proba: Model confidence (if available).
         tb_score: TextBlob sentiment polarity.
-        genre_prediction: Predicted genre class.
+        genre_prediction: Predicted genre.
     """
     cleaned = clean_text(lyrics)
     
@@ -72,16 +72,15 @@ def predict_values(lyrics):
 
 def init_db():
     """
-    Initializes the submissions database by dropping the existing table (if it exists)
-    and creating a new one with the updated schema.
+    Initializes the submissions database.
+    Uses CREATE TABLE IF NOT EXISTS to avoid dropping existing data.
     """
     db_path = os.path.join("resources", "submissions_log.db")
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
-    # Drop table if it exists to update schema
-    c.execute("DROP TABLE IF EXISTS submissions")
+    # Create the table only if it doesn't exist.
     c.execute("""
-        CREATE TABLE submissions (
+        CREATE TABLE IF NOT EXISTS submissions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp TEXT,
             artist TEXT,
@@ -110,7 +109,7 @@ def log_submission_db(artist, lyrics, sentiment, sentiment_confidence, tb_score,
     conn.commit()
     conn.close()
 
-# Initialize the database with the updated schema.
+# Initialize the database (this will NOT clear existing data)
 init_db()
 
 @app.route("/")

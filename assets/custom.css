@@ -1,0 +1,79 @@
+/* custom.css - Highly Visible Styles */
+
+/* Global body style: Bright background with high-contrast text */
+body {
+  background-color: #ffcc00 !important;  /* Bright yellow */
+  color: #000000 !important;
+  font-family: "Arial Black", Gadget, sans-serif;
+  font-size: 18px;
+  margin: 0;
+  padding: 20px;
+}
+
+/* Header styles: Bright red with white shadow for extra emphasis */
+h1, h2, h3 {
+  color: #d10000 !important;           /* Bold red */
+  text-shadow: 2px 2px 2px #ffffff !important;
+  margin-bottom: 20px;
+}
+
+/* Button styling: Big, bold, and high-contrast */
+.button {
+  background-color: #00aaff !important;  /* Vivid blue background */
+  color: #ffffff !important;             /* White text */
+  padding: 15px 30px !important;
+  border: 3px solid #ff00ff !important;   /* Bright magenta border */
+  border-radius: 10px !important;
+  font-size: 20px !important;
+  font-weight: bold !important;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.5s ease !important;
+  margin: 10px !important;
+}
+
+.button:hover {
+  background-color: #ff00ff !important;  /* Swap background on hover */
+  border-color: #00aaff !important;
+  transform: scale(1.1);
+}
+
+/* Dash Tab styling: Make tabs very visible */
+.rc-Tabs-tab {
+  background-color: #00ffaa !important;       /* Bright green */
+  border: 2px solid #000000 !important;
+  color: #000000 !important;
+  padding: 10px 20px !important;
+  font-weight: bold !important;
+  margin: 5px !important;
+}
+
+.rc-Tabs-tab-active {
+  background-color: #ff00aa !important;       /* Vivid pink */
+  border-bottom: 4px solid #000000 !important;
+  color: #ffffff !important;
+}
+
+/* Input field styling: Clear background with strong borders */
+input, select, textarea {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #333333 !important;
+  font-size: 16px !important;
+  padding: 10px !important;
+  border-radius: 5px !important;
+}
+
+/* Data Table header styling: Bright orange header for extra visibility */
+.dash-table-header {
+  background-color: #ff8800 !important;
+  color: #000 !important;
+  font-weight: bold !important;
+}
+
+/* Container styling: Adds spacing and makes content easy to read */
+.container {
+  margin: auto;
+  padding: 20px;
+  max-width: 1200px;
+}

@@ -97,9 +97,16 @@ def load_submissions():
     return submissions_df
 
 # -----------------------------
+# Link to External CSS File (located in the assets folder)
+# -----------------------------
+# Dash automatically looks in the assets folder for any CSS files.
+# You can also explicitly specify external stylesheets as shown below.
+external_stylesheets = ['assets/custom.css']
+
+# -----------------------------
 # Dash App Layout with Tabs
 # -----------------------------
-app = dash.Dash(__name__, suppress_callback_exceptions=True)
+app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=external_stylesheets)
 
 app.layout = html.Div([
     html.H1("Music Dataset Trends Dashboard", style={'textAlign': 'center'}),
@@ -239,4 +246,4 @@ def update_thematic_histogram(selected_feature):
     return {}
 
 if __name__ == '__main__':
-    app.run(debug=True)  
+    app.run(debug=True)

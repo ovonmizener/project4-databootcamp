@@ -12,9 +12,9 @@ import sqlite3
 data_file_path = os.path.join("resources", "processed_tcc_ceds_music.csv")
 df = pd.read_csv(data_file_path)
 
-# If available, extract the release year from 'release_date'
+# Since the release_date column contains only the year (ex: 1950), convert it to integer.
 if "release_date" in df.columns:
-    df["release_year"] = pd.to_datetime(df["release_date"], errors='coerce').dt.year
+    df["release_year"] = df["release_date"].astype(int)
 
 # -----------------------------
 # Pre-compute Static Figures for the Overview Tab
@@ -34,6 +34,7 @@ else:
 
 # (2) Release Year vs. Sentiment Score Scatterplot
 if df["release_year"].notna().sum() > 0 and "sentiment_score" in df.columns:
+    # Use the release_year directly without filtering out 1970
     fig_release_sentiment = px.scatter(
         df,
         x="release_year",
@@ -99,8 +100,6 @@ def load_submissions():
 # -----------------------------
 # Link to External CSS File (located in the assets folder)
 # -----------------------------
-# Dash automatically looks in the assets folder for any CSS files.
-# You can also explicitly specify external stylesheets as shown below.
 external_stylesheets = ['assets/custom.css']
 
 # -----------------------------
@@ -180,15 +179,12 @@ def render_content(tab):
                 html.P("No submissions available yet.")
             ])
         else:
-            # Create a histogram of TextBlob scores from user submissions.
-            # Note: Use "textblob_score" as that is the actual column name.
             fig_tb_hist = px.histogram(
                 submissions_df, 
                 x="textblob_score", 
                 nbins=20, 
                 title="Distribution of User TextBlob Scores"
             )
-            # Create a data table for recent submissions.
             submissions_table = dash_table.DataTable(
                 data=submissions_df.to_dict('records'),
                 columns=[{"name": i, "id": i} for i in submissions_df.columns],
@@ -235,8 +231,12 @@ def update_numeric_histogram(selected_feature):
 )
 def update_thematic_histogram(selected_feature):
     if selected_feature:
+        # Convert the thematic feature to numeric (if not already) and filter out 0 values.
+        df_temp = df.copy()
+        df_temp[selected_feature] = pd.to_numeric(df_temp[selected_feature], errors='coerce')
+        filtered_df = df_temp[df_temp[selected_feature] != 0]
         fig = px.histogram(
-            df, 
+            filtered_df, 
             x=selected_feature, 
             nbins=30,
             title=f"Distribution of {selected_feature.capitalize()}",

@@ -1,28 +1,28 @@
-/* custom.css - Highly Visible Styles */
+/* custom.css - Dark Gray and Blue Color Scheme */
 
-/* Global body style: Bright background with high-contrast text */
+/* Global body style: Dark gray background with light text */
 body {
-  background-color: #ffcc00 !important;  /* Bright yellow */
-  color: #000000 !important;
-  font-family: "Arial Black", Gadget, sans-serif;
+  background-color: #2c2c2c !important;  /* Dark gray */
+  color: #444444 !important;              /* Dark gray text */
+  font-family: "Arial", sans-serif;
   font-size: 18px;
   margin: 0;
   padding: 20px;
 }
 
-/* Header styles: Bright red with white shadow for extra emphasis */
+/* Header styles: Blue tone for headers with subtle shadow */
 h1, h2, h3 {
-  color: #d10000 !important;           /* Bold red */
-  text-shadow: 2px 2px 2px #ffffff !important;
+  color: #0099ff !important;             /* Blue hue */
+  text-shadow: 2px 2px 2px #000000 !important;
   margin-bottom: 20px;
 }
 
-/* Button styling: Big, bold, and high-contrast */
+/* Button styling: Bold blue buttons with dark gray borders */
 .button {
-  background-color: #00aaff !important;  /* Vivid blue background */
+  background-color: #007acc !important;  /* Strong blue */
   color: #ffffff !important;             /* White text */
   padding: 15px 30px !important;
-  border: 3px solid #ff00ff !important;   /* Bright magenta border */
+  border: 3px solid #444444 !important;   /* Dark gray border */
   border-radius: 10px !important;
   font-size: 20px !important;
   font-weight: bold !important;
@@ -33,41 +33,41 @@ h1, h2, h3 {
 }
 
 .button:hover {
-  background-color: #ff00ff !important;  /* Swap background on hover */
-  border-color: #00aaff !important;
+  background-color: #005a9e !important;  /* Darker blue on hover */
+  border-color: #007acc !important;
   transform: scale(1.1);
 }
 
-/* Dash Tab styling: Make tabs very visible */
+/* Dash Tab styling: Dark gray tabs with blue accents */
 .rc-Tabs-tab {
-  background-color: #00ffaa !important;       /* Bright green */
-  border: 2px solid #000000 !important;
-  color: #000000 !important;
+  background-color: #3a3a3a !important;       /* Medium dark gray */
+  border: 2px solid #555555 !important;
+  color: #e0e0e0 !important;
   padding: 10px 20px !important;
   font-weight: bold !important;
   margin: 5px !important;
 }
 
 .rc-Tabs-tab-active {
-  background-color: #ff00aa !important;       /* Vivid pink */
-  border-bottom: 4px solid #000000 !important;
+  background-color: #007acc !important;       /* Active tab in blue */
+  border-bottom: 4px solid #005a9e !important;
   color: #ffffff !important;
 }
 
-/* Input field styling: Clear background with strong borders */
+/* Input field styling: Dark themed inputs with blue borders */
 input, select, textarea {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  border: 2px solid #333333 !important;
+  background-color: #444444 !important;
+  color: #e0e0e0 !important;
+  border: 2px solid #007acc !important;
   font-size: 16px !important;
   padding: 10px !important;
   border-radius: 5px !important;
 }
 
-/* Data Table header styling: Bright orange header for extra visibility */
+/* Data Table header styling: Blue header for consistency */
 .dash-table-header {
-  background-color: #ff8800 !important;
-  color: #000 !important;
+  background-color: #007acc !important;
+  color: #ffffff !important;
   font-weight: bold !important;
 }
 

@@ -48,23 +48,45 @@ PROJECT STRUCTURE
 -----------------
 project4-databootcamp/
   assets/
-  custom.css           (Custom CSS file for the dark gray & blue theme)
+    custom.css           (Custom CSS file for the dark gray & blue theme)
   resources/
-  processed_tcc_ceds_music.csv   (The base CSV dataset)
-  submissions_log.db   (SQLite database for user submissions)
-  [model files].pkl     (Pre-trained .pkl files for predictive models - required)
-  dashboardapp.py          (Dash dashboard application)
-  app.py             (Flask application for user submissions, if separate)
-  requirements.txt   (Dependencies to install)
-  README.txt               (This file)
+    processed_tcc_ceds_music.csv   (The base CSV dataset)
+    submissions_log.db   (SQLite database for user submissions)
+    # Required Model Files:
+    feature_tfidf.pkl    (TF-IDF vectorizer for feature prediction)
+    feature_model_danceability.pkl
+    feature_model_loudness.pkl
+    feature_model_acousticness.pkl
+    feature_model_instrumentalness.pkl
+    feature_model_valence.pkl
+    feature_model_energy.pkl
+    feature_scaler_danceability.pkl
+    feature_scaler_loudness.pkl
+    feature_scaler_acousticness.pkl
+    feature_scaler_instrumentalness.pkl
+    feature_scaler_valence.pkl
+    feature_scaler_energy.pkl
+    sentiment_model.pkl  (Sentiment analysis model)
+    sentiment_scaler.pkl
+    sentiment_tfidf.pkl
+    genre_model.pkl     (Genre prediction model)
+    genre_scaler.pkl
+    genre_tfidf.pkl
+  dashboardapp.py       (Dash dashboard application)
+  app.py               (Flask application for user submissions)
+  feature_predictor.py (Script for training feature prediction models)
+  sentimentanalyzer.py (Script for training sentiment analysis model)
+  genre_predictor.py   (Script for training genre prediction model)
+  requirements.txt     (Dependencies to install)
+  README.md           (This file)
 
 NOTE: The pre-trained model files (.pkl) are required for the tool to run correctly. They should be included in the repository or instructions provided on how to obtain them.
 
 HOW TO RUN
 ----------
 1. Clone the Repository:
-   git clone https://github.com/yourusername/Music-Sentiment-Analyzer.git
-   cd Music-Sentiment-Analyzer
+   git clone https://github.com/ovonmizener/project4-databootcamp.git
+   cd project4-databootcamp
 
 2. Set Up the Environment:
    - Create and activate a virtual environment (using `venv` or `conda`).
@@ -78,16 +100,33 @@ HOW TO RUN
 3. Prepare the Data Files:
    - Ensure the "resources" folder contains:
      * processed_tcc_ceds_music.csv (the base dataset)
-     * submissions_log.db (for user submissions)
-     * All required .pkl model files
+     * All required .pkl model files (see Project Structure section)
 
-4. Run the Dashboard:
-   python dashboardapp.py
-   (The dashboard should be accessible at http://127.0.0.1:8050/)
+4. Run Order (if training models from scratch):
+   a. First, train the sentiment analysis model:
+      python sentimentanalyzer.py
+   b. Then, train the genre prediction model:
+      python genre_predictor.py*
+   c. Finally, train the feature prediction model:
+      python feature_predictor.py
+   
+   Note: If using pre-trained models, you can skip steps 4a-4c.
+   
+   *Important: The feature_predictor.py file is included for review purposes only. 
+   DO NOT run this file on local machines as it requires significant computational resources 
+   and the pre-trained models are already included in the resources folder. This file is 
+   provided to demonstrate how the feature prediction models were created and trained. This will take HOURS to run on a standard machine. 
 
-5. (Optional) Run the Flask Application:
-   If you want to run the front end submission, in a new terminal, run:
-   python flask_app.py
+5. Run the Applications:
+   a. Start the Flask application (for user submissions):
+      python app.py
+      (The web interface will be available at http://127.0.0.1:5000/)
+   
+   b. In a separate terminal, start the dashboard:
+      python dashboardapp.py
+      (The dashboard will be available at http://127.0.0.1:8050/)
+
+Note: The Flask application (app.py) and the dashboard (dashboardapp.py) can be run in any order, but both need to be running for full functionality.
 
 PROCESS & WORKFLOW
 ------------------
@@ -95,14 +134,38 @@ PROCESS & WORKFLOW
    - Gather the Spotify dataset and preprocess it using Python.
    - Convert the release_date column (which contains only the year) to integers.
    - Remove unwanted characters and standardize the text in the lyrics.
-2. Baseline Sentiment Analysis:
-   - Use TextBlob to generate initial sentiment scores as training labels.
-   - Train a sentiment classifier (e.g., Logistic Regression using scikit‑learn) and serialize it with pickle.
-3. Visualization & Dashboard Deployment:
+
+2. Feature Analysis & Prediction:
+   - Implemented a proof-of-concept feature predictor that attempts to predict musical features from lyrics
+   - Uses TF-IDF vectorization and Random Forest Regression to predict:
+     * Danceability
+     * Loudness
+     * Acousticness
+     * Instrumentalness
+     * Valence
+     * Energy
+   - Note: This is a proof-of-concept implementation with limited accuracy (R² scores around 0.15)
+   - Future iterations could improve accuracy by:
+     * Using more sophisticated models
+     * Incorporating additional features
+     * Training on larger datasets
+
+3. Baseline Sentiment Analysis (Primary Graded Component):
+   - Implemented a robust sentiment analysis model achieving approximately 87% accuracy
+   - Uses TextBlob for initial sentiment scoring and Logistic Regression for classification
+   - This is the primary model chosen for grading, demonstrating strong performance in
+     predicting sentiment from lyrics
+   - The model is trained on a large dataset of song lyrics and their associated
+     sentiment scores, making it particularly effective for musical content
+   - Results are visualized in the dashboard through various interactive charts
+     and user submission analysis
+
+4. Visualization & Dashboard Deployment:
    - Pre-compute static figures (e.g., average sentiment by genre; scatter plot for release year vs. sentiment).
    - Build an interactive dashboard with multiple tabs (Overview, Numeric Analysis, Thematic Analysis, Track Info, User Responses).
    - Integrate a Flask user submission interface to capture additional lyric data dynamically.
-4. User Interaction:
+
+5. User Interaction:
    - Allow users to input lyrics through a web form.
    - Process input through pre-trained models and update the dashboard with new insights.
 

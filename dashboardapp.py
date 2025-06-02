@@ -16,6 +16,18 @@ df = pd.read_csv(data_file_path)
 if "release_date" in df.columns:
     df["release_year"] = df["release_date"].astype(int)
 
+# Define numeric columns for analysis
+numeric_cols = ["danceability", "loudness", "acousticness", "instrumentalness", "valence", "energy"]
+initial_numeric_feature = numeric_cols[0] if numeric_cols else None
+
+theme_cols = [
+    "dating", "violence", "world/life", "night/time", "shake the audience",
+    "family/gospel", "romantic", "communication", "obscene", "music",
+    "movement/places", "light/visual perceptions", "family/spiritual",
+    "like/girls", "sadness", "feelings"
+]
+initial_theme_feature = theme_cols[0] if theme_cols else None
+
 # -----------------------------
 # Pre-compute Static Figures for the Overview Tab
 # -----------------------------
@@ -66,20 +78,6 @@ if "genre" in df.columns:
     )
 else:
     fig_genre_counts = {}
-
-# -----------------------------
-# Define Dropdown Options for Dynamic Visualizations
-# -----------------------------
-numeric_cols = ["danceability", "loudness", "acousticness", "instrumentalness", "valence", "energy"]
-initial_numeric_feature = numeric_cols[0] if numeric_cols else None
-
-theme_cols = [
-    "dating", "violence", "world/life", "night/time", "shake the audience",
-    "family/gospel", "romantic", "communication", "obscene", "music",
-    "movement/places", "light/visual perceptions", "family/spiritual",
-    "like/girls", "sadness", "feelings"
-]
-initial_theme_feature = theme_cols[0] if theme_cols else None
 
 # -----------------------------
 # Function to Load Submissions from SQLite
@@ -181,16 +179,22 @@ def render_content(tab):
         if submissions_df.empty:
             return html.Div([html.H2("User Responses"), html.P("No submissions available yet.")])
         
-        required_cols = ['sentiment_confidence', 'textblob_score', 'predicted_genre']
+        required_cols = ['sentiment_confidence', 'textblob_score', 'predicted_genre', 
+                        'danceability', 'loudness', 'acousticness', 'instrumentalness', 
+                        'valence', 'energy']
         missing = [col for col in required_cols if col not in submissions_df.columns]
         if missing:
             return html.Div([html.H2("User Responses"), html.P("Submissions missing columns: " + ", ".join(missing))])
         
-        submissions_df['sentiment_confidence'] = pd.to_numeric(submissions_df['sentiment_confidence'], errors='coerce')
-        submissions_df['textblob_score'] = pd.to_numeric(submissions_df['textblob_score'], errors='coerce')
+        # Convert numeric columns
+        response_numeric_cols = ['sentiment_confidence', 'textblob_score', 'danceability', 
+                       'loudness', 'acousticness', 'instrumentalness', 'valence', 'energy']
+        for col in response_numeric_cols:
+            submissions_df[col] = pd.to_numeric(submissions_df[col], errors='coerce')
+        
         submissions_df = submissions_df.reset_index().rename(columns={"index": "submission_id"})
         
-        # Reshape data for a grouped bar chart comparing confidence vs. TextBlob score per submission
+        # 1. Sentiment Analysis Visualizations
         df_long = submissions_df.melt(
             id_vars=["submission_id"],
             value_vars=["sentiment_confidence", "textblob_score"],
@@ -207,7 +211,6 @@ def render_content(tab):
             title="Comparison of Confidence & Sentiment per Submission",
             labels={"submission_id": "Submission ID", "score_value": "Score", "score_type": "Metric"}
         )
-        # Update legend names: 'sentiment_confidence' becomes "Confidence" and 'textblob_score' becomes "Sentiment"
         fig_bar.for_each_trace(lambda t: t.update(name="Confidence" if t.name == "sentiment_confidence" else "Sentiment"))
 
         fig_box = px.box(
@@ -219,16 +222,75 @@ def render_content(tab):
             labels={"predicted_genre": "Predicted Genre", "textblob_score": "TextBlob Score"}
         )
 
+        # 2. Musical Features Visualizations
+        # Radar chart for average musical features
+        musical_features = ['danceability', 'loudness', 'acousticness', 
+                          'instrumentalness', 'valence', 'energy']
+        
+        avg_features = submissions_df[musical_features].mean()
+        fig_radar = px.line_polar(
+            r=avg_features.values,
+            theta=musical_features,
+            line_close=True,
+            title="Average Musical Features of Submissions"
+        )
+        fig_radar.update_traces(fill='toself')
+
+        # Scatter matrix of musical features
+        fig_scatter = px.scatter_matrix(
+            submissions_df,
+            dimensions=musical_features,
+            title="Correlation Matrix of Musical Features",
+            color="predicted_genre"
+        )
+
+        # 3. Feature Distribution by Genre
+        df_long_features = submissions_df.melt(
+            id_vars=["predicted_genre"],
+            value_vars=musical_features,
+            var_name="feature",
+            value_name="value"
+        )
+        
+        fig_feature_box = px.box(
+            df_long_features,
+            x="predicted_genre",
+            y="value",
+            color="feature",
+            title="Musical Feature Distribution by Predicted Genre",
+            labels={"predicted_genre": "Predicted Genre", "value": "Feature Value", "feature": "Musical Feature"}
+        )
+
+        # 4. Recent Submissions Table
         submissions_table = dash_table.DataTable(
             data=submissions_df.to_dict('records'),
             columns=[{"name": col, "id": col} for col in submissions_df.columns],
-            page_size=10
+            page_size=10,
+            style_table={'overflowX': 'auto'},
+            style_cell={
+                'textAlign': 'left',
+                'padding': '10px',
+                'whiteSpace': 'normal',
+                'height': 'auto',
+            },
+            style_header={
+                'backgroundColor': 'rgb(230, 230, 230)',
+                'fontWeight': 'bold'
+            }
         )
 
         return html.Div([
             html.H2("User Responses"),
+            
+            html.H3("Sentiment Analysis"),
             dcc.Graph(figure=fig_bar),
             dcc.Graph(figure=fig_box),
+            
+            html.H3("Musical Features Analysis"),
+            dcc.Graph(figure=fig_radar),
+            dcc.Graph(figure=fig_scatter),
+            dcc.Graph(figure=fig_feature_box),
+            
             html.H3("Recent Submissions"),
             submissions_table
         ], style={'width': '90%', 'margin': 'auto'})

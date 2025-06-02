@@ -5,6 +5,7 @@ import pickle
 from textblob import TextBlob
 import sqlite3
 import datetime
+from feature_predictor import FeaturePredictor
 
 # test
 
@@ -15,7 +16,7 @@ def load_pickled_models():
     """
     Load the TF-IDF vectorizers and predictive models from the 'resources' folder.
     Returns:
-        tfidf_sentiment, sentiment_model, tfidf_genre, genre_model
+        tfidf_sentiment, sentiment_model, tfidf_genre, genre_model, feature_predictor
     """
     resources_folder = "resources"
     try:
@@ -27,14 +28,19 @@ def load_pickled_models():
             tfidf_genre = pickle.load(f)
         with open(os.path.join(resources_folder, "genre_model.pkl"), "rb") as f:
             genre_model = pickle.load(f)
-        return tfidf_sentiment, sentiment_model, tfidf_genre, genre_model
+            
+        # Load feature predictor
+        feature_predictor = FeaturePredictor()
+        feature_predictor.load_models()
+        
+        return tfidf_sentiment, sentiment_model, tfidf_genre, genre_model, feature_predictor
     except FileNotFoundError as e:
         print("Error loading pickle file:", e)
-        return None, None, None, None
+        return None, None, None, None, None
 
 # Load the models.
-tfidf_sentiment, sentiment_model, tfidf_genre, genre_model = load_pickled_models()
-if None in [tfidf_sentiment, sentiment_model, tfidf_genre, genre_model]:
+tfidf_sentiment, sentiment_model, tfidf_genre, genre_model, feature_predictor = load_pickled_models()
+if None in [tfidf_sentiment, sentiment_model, tfidf_genre, genre_model, feature_predictor]:
     raise Exception("One or more pickle files not found. Ensure the training script has been run successfully.")
 
 def clean_text(text):
@@ -47,12 +53,13 @@ def clean_text(text):
 
 def predict_values(lyrics):
     """
-    Predicts sentiment and genre for the input lyrics.
+    Predicts sentiment, genre, and additional features for the input lyrics.
     Returns:
         sentiment_prediction: Binary prediction (1 = Positive/Neutral, 0 = Negative).
         sentiment_proba: Model confidence (if available).
         tb_score: TextBlob sentiment polarity.
         genre_prediction: Predicted genre.
+        feature_predictions: Dictionary of predicted features (danceability, loudness, etc.)
     """
     cleaned = clean_text(lyrics)
     
@@ -70,19 +77,26 @@ def predict_values(lyrics):
     features_genre = tfidf_genre.transform([cleaned])
     genre_prediction = genre_model.predict(features_genre)[0]
     
-    return sentiment_prediction, sentiment_proba, tb_score, genre_prediction
+    # Predict additional features
+    feature_predictions = feature_predictor.predict_features(lyrics)
+    
+    return sentiment_prediction, sentiment_proba, tb_score, genre_prediction, feature_predictions
 
 def init_db():
     """
     Initializes the submissions database.
-    Uses CREATE TABLE IF NOT EXISTS to avoid dropping existing data.
+    Drops and recreates the table to ensure correct schema.
     """
     db_path = os.path.join("resources", "submissions_log.db")
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
-    # Create the table only if it doesn't exist.
+    
+    # Drop the existing table if it exists
+    c.execute("DROP TABLE IF EXISTS submissions")
+    
+    # Create the table with the correct schema
     c.execute("""
-        CREATE TABLE IF NOT EXISTS submissions (
+        CREATE TABLE submissions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp TEXT,
             artist TEXT,
@@ -90,13 +104,19 @@ def init_db():
             sentiment TEXT,
             sentiment_confidence REAL,
             textblob_score REAL,
-            predicted_genre TEXT
+            predicted_genre TEXT,
+            danceability REAL,
+            loudness REAL,
+            acousticness REAL,
+            instrumentalness REAL,
+            valence REAL,
+            energy REAL
         )
     """)
     conn.commit()
     conn.close()
 
-def log_submission_db(artist, lyrics, sentiment, sentiment_confidence, tb_score, genre):
+def log_submission_db(artist, lyrics, sentiment, sentiment_confidence, tb_score, genre, features):
     """
     Logs the submission data into the SQLite database.
     """
@@ -105,9 +125,18 @@ def log_submission_db(artist, lyrics, sentiment, sentiment_confidence, tb_score,
     c = conn.cursor()
     timestamp = datetime.datetime.now().isoformat()
     c.execute("""
-        INSERT INTO submissions (timestamp, artist, lyrics, sentiment, sentiment_confidence, textblob_score, predicted_genre)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (timestamp, artist, lyrics, sentiment, sentiment_confidence, tb_score, genre))
+        INSERT INTO submissions (
+            timestamp, artist, lyrics, sentiment, sentiment_confidence, 
+            textblob_score, predicted_genre, danceability, loudness, 
+            acousticness, instrumentalness, valence, energy
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        timestamp, artist, lyrics, sentiment, sentiment_confidence, 
+        tb_score, genre, features['danceability'], features['loudness'],
+        features['acousticness'], features['instrumentalness'], 
+        features['valence'], features['energy']
+    ))
     conn.commit()
     conn.close()
 
@@ -126,11 +155,11 @@ def predict():
         error_msg = "Please enter some lyrics to get a prediction."
         return render_template("index.html", error=error_msg)
     
-    sentiment_pred, sentiment_conf, tb_score, genre_pred = predict_values(lyrics)
+    sentiment_pred, sentiment_conf, tb_score, genre_pred, feature_preds = predict_values(lyrics)
     sentiment_label = "Positive/Neutral" if sentiment_pred == 1 else "Negative"
     
     # Log the submission.
-    log_submission_db(artist, lyrics, sentiment_label, sentiment_conf, tb_score, genre_pred)
+    log_submission_db(artist, lyrics, sentiment_label, sentiment_conf, tb_score, genre_pred, feature_preds)
     
     result = {
         "artist": artist,
@@ -138,7 +167,8 @@ def predict():
         "sentiment_confidence": sentiment_conf,
         "tb_score": tb_score,
         "predicted_genre": genre_pred,
-        "lyrics": lyrics
+        "lyrics": lyrics,
+        "features": feature_preds
     }
     
     return render_template("result.html", result=result)
